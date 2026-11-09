@@ -12,27 +12,32 @@ RAW_DATA_DIR = os.path.join(os.path.dirname(__file__), "..", "raw-data")
 
 def search_product_catalog(
     category: str,
-    max_price: int = None
+    max_price: int = 999999999999
 ) -> List[Dict[str, Any]]:
     """
     Tra cứu sản phẩm/dịch vụ Vingroup theo danh mục và giá tối đa.
 
     Args:
         category: Loại sản phẩm ('xe_dien' cho xe điện VinFast, 'du_lich' cho Vinpearl).
-        max_price: Giá tối đa (VNĐ). Nếu None thì không giới hạn giá.
+        max_price: Giá tối đa (VNĐ). Mặc định rất lớn (không giới hạn giá).
 
     Returns:
         Danh sách sản phẩm khớp với danh mục và giá <= max_price.
+        Trả về [{"error": ...}] nếu file catalog không tồn tại.
     """
     catalog_file = os.path.join(RAW_DATA_DIR, "product_catalog.json")
+    if not os.path.exists(catalog_file):
+        return [{"error": "Product catalog file not found."}]
+
     with open(catalog_file, "r", encoding="utf-8") as f:
         products = json.load(f)
 
-    results = [p for p in products if p.get("category") == category]
-
-    if max_price is not None:
-        results = [p for p in results if p.get("price_vnd", 0) <= max_price]
-
+    # Lọc sản phẩm theo category + max_price
+    results = [
+        p for p in products
+        if p["category"].lower() == category.lower()
+        and p["price_vnd"] <= max_price
+    ]
     return results
 
 
